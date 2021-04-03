@@ -6,12 +6,6 @@ SERVER_NAME="witness"
 GIT_REPO="https://github.com/hive-engine/steemsmartcontracts.git"
 GIT_TAG=he_v1.2.0
 
-##################
-## INIT UPDATES ##
-##################
-apt-get update -y
-apt-get upgrade -y
-
 ####################
 ## INSTALL BASICS ##
 ####################
@@ -25,21 +19,6 @@ apt install ufw -y
 mkdir -p /var/$SERVER_NAME
 cd /var/$SERVER_NAME
 git clone --recursive --branch $GIT_TAG $GIT_REPO ./
-# git checkout heRelease1.1
-
-######################
-## INSTALL FAIL2BAN ##
-######################
-apt-get -y install fail2ban
-touch /etc/fail2ban/jail.local
-echo "[DEFAULT]" >> /etc/fail2ban/jail.local
-echo "bantime = 3600" >> /etc/fail2ban/jail.local
-echo "banaction = iptables-multiport" >> /etc/fail2ban/jail.local
-echo "ignoreip = 127.0.0.1/8" >> /etc/fail2ban/jail.local
-echo "[sshd]" >> /etc/fail2ban/jail.local
-echo "enabled = true" >> /etc/fail2ban/jail.local
-systemctl start fail2ban
-systemctl enable fail2ban
 
 #####################
 ## INSTALL MONGODB ##
@@ -57,10 +36,10 @@ systemctl start mongod
 ################
 ## RESTORE DB ##
 ################
-cd /var/$SERVER_NAME
-# wget http://api2.hive-engine.com/hsc_20210203_b50993579.archive
-# mongo --eval "rs.initiate()"
-# mongorestore --gzip --archive=hsc_20210203_b50993579.archive
+cd /tmp
+wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1VCe55D5IeVS0NuEzMSNbTMmlT8YS6C4J' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1VCe55D5IeVS0NuEzMSNbTMmlT8YS6C4J" -O hsc_2021-04-03_b52688121 && rm -rf /tmp/cookies.txt
+mongo --eval "rs.initiate()"
+mongorestore --gzip --archive=hsc_2021-04-03_b52688121
 
 ##############
 ## SET SWAP ##
@@ -73,8 +52,11 @@ swapon /swapfile
 ##################
 ## INSTALL NODE ##
 ##################
-curl -sL https://deb.nodesource.com/setup_14.x | -E bash -
-apt-get install -y nodejs
+cd /tmp
+curl -sL https://deb.nodesource.com/setup_14.x -o nodesource_setup.sh
+chmod +x nodesource_setup.sh
+/tmp/nodesource_setup.sh
+apt-get -y install nodejs
 apt-get -y install npm
 
 #################
@@ -95,3 +77,17 @@ cat > /var/$SERVER_NAME/.env << EOF
 ACTIVE_SIGNING_KEY=5K...
 ACCOUNT=youraccount
 EOF
+
+######################
+## INSTALL FAIL2BAN ##
+######################
+apt-get -y install fail2ban
+touch /etc/fail2ban/jail.local
+echo "[DEFAULT]" >> /etc/fail2ban/jail.local
+echo "bantime = 3600" >> /etc/fail2ban/jail.local
+echo "banaction = iptables-multiport" >> /etc/fail2ban/jail.local
+echo "ignoreip = 127.0.0.1/8" >> /etc/fail2ban/jail.local
+echo "[sshd]" >> /etc/fail2ban/jail.local
+echo "enabled = true" >> /etc/fail2ban/jail.local
+systemctl start fail2ban
+systemctl enable fail2ban
